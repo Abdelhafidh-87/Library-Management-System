@@ -1,14 +1,13 @@
 from rest_framework import serializers
+from django.contrib.auth import authenticate
 from .models import User, UserProfile
 
 
-# ---------------------------------------------------------
+# -------------------------
 # User Serializers
-# ---------------------------------------------------------
+# -------------------------
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer pour renvoyer les infos utilisateur sans le mot de passe"""
-    
     class Meta:
         model = User
         fields = [
@@ -17,9 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
             "max_loans", "created_at", "updated_at"
         ]
 
-class RegisterSerializer(serializers.ModelSerializer):
-    """Serializer utilisé pour l'inscription"""
 
+class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -31,28 +29,38 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Le mot de passe doit contenir au moins 8 caractères.")
+            raise serializers.ValidationError(
+                "Le mot de passe doit contenir au moins 8 caractères."
+            )
         return value
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
+        user = User.objects.create_user(password=password, **validated_data)
         return user
 
+
 class LoginSerializer(serializers.Serializer):
-    """Serializer pour la connexion"""
     email = serializers.EmailField()
     password = serializers.CharField()
 
+    def validate(self, attrs):
+        user = authenticate(
+            email=attrs.get("email"),
+            password=attrs.get("password"),
+        )
+        if not user:
+            raise serializers.ValidationError("Email ou mot de passe incorrect.")
 
-# ---------------------------------------------------------
+        attrs["user"] = user
+        return attrs
+
+
+# -------------------------
 # UserProfile Serializers
-# ---------------------------------------------------------
+# -------------------------
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer pour afficher le profil complet"""
     user = UserSerializer(read_only=True)
 
     class Meta:
@@ -67,8 +75,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    """Serializer pour modifier uniquement les infos du profil"""
-
     class Meta:
         model = UserProfile
         fields = [

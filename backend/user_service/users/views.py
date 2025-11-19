@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view,permission_classes
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 from .models import User, UserProfile
@@ -36,17 +38,16 @@ def register(request):
 def login_view(request):
     serializer = LoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data['email']
-    password = serializer.validated_data['password']
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({"error": "Identifiants invalides."}, status=400)
-    if not user.check_password(password):
-        return Response({"error": "Identifiants invalides."}, status=400)
+    
+    user = serializer.validate_data["user"]
+    
+    refresh = RefreshToken.for_user(user)
+    
     return Response({
-        "message": "Connexion réussie.",
-        "user": UserSerializer(user).data
+        "message" : "Connexion reussie. ",
+        "user" : UserSerializer(user).data,
+        "access" : str(refresh.access_token),
+        "refresh" : str(refresh)
     })
 
 
