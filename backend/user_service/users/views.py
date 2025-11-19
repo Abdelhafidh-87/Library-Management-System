@@ -26,3 +26,25 @@ def register(request):
         "message": "Inscription réussie.",
         "user": UserSerializer(user).data
     })
+
+# ======================
+#     🔹 LOGIN
+# ======================
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    serializer = LoginSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    email = serializer.validated_data['email']
+    password = serializer.validated_data['password']
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"error": "Identifiants invalides."}, status=400)
+    if not user.check_password(password):
+        return Response({"error": "Identifiants invalides."}, status=400)
+    return Response({
+        "message": "Connexion réussie.",
+        "user": UserSerializer(user).data
+    })
