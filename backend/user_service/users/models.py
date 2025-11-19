@@ -48,3 +48,22 @@ class User(models.Model):
     
     def can_borrow(self):
         return self.is_active
+    
+
+
+class UserProfile(models.Model):
+    """
+    Profil détaillé associé à un utilisateur.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    bio = models.TextField(null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    avatar_url = models.CharField(max_length=255, null=True, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = "user_profiles"
+        ordering = ["user__username"]
+
+    def __str__(self):
+        return f"Profile de {self.user.username}"    
