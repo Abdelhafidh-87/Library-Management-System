@@ -45,3 +45,35 @@ class LoginSerializer(serializers.Serializer):
     """Serializer pour la connexion"""
     email = serializers.EmailField()
     password = serializers.CharField()
+
+
+# ---------------------------------------------------------
+# UserProfile Serializers
+# ---------------------------------------------------------
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer pour afficher le profil complet"""
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "bio",
+            "address",
+            "avatar_url",
+            "birth_date",
+        ]
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer pour modifier uniquement les infos du profil"""
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "bio",
+            "address",
+            "avatar_url",
+            "birth_date",
+        ]
