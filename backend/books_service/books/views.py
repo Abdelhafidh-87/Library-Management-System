@@ -1,0 +1,57 @@
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+from .models import Book
+from .serializers import BookSerializer
+
+# GET /books
+@api_view(['GET'])
+def list_books(request):
+    paginator = PageNumberPagination()
+    books = Book.objects.all()
+    result_page = paginator.paginate_queryset(books, request)
+    serializer = BookSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+# GET /books/{id}
+@api_view(['GET'])
+def get_book(request, id):
+    try:
+        book = Book.objects.get(id=id)
+    except Book.DoesNotExist:
+        return Response({'error': 'Livre non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = BookSerializer(book)
+    return Response(serializer.data)
+
+# POST /books
+@api_view(['POST'])
+def create_book(request):
+    serializer = BookSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# PUT /books/{id}
+@api_view(['PUT'])
+def update_book(request, id):
+    try:
+        book = Book.objects.get(id=id)
+    except Book.DoesNotExist:
+        return Response({'error': 'Livre non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = BookSerializer(book, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# DELETE /books/{id}
+@api_view(['DELETE'])
+def delete_book(request, id):
+    try:
+        book = Book.objects.get(id=id)
+    except Book.DoesNotExist:
+        return Response({'error': 'Livre non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    book.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
